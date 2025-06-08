@@ -115,20 +115,20 @@ Tasks:
 
 ### Agent Communication (`src/agent_framework/agent_communication.py`)
 
-Status: 🟡 Partial
+Status: 🟢 Complete
 
 Tasks:
 - [x] Implement message handler registration
 - [x] Implement message handler execution
-- [ ] Implement `send_message` method for agent-to-agent communication
-- [ ] Implement `broadcast_message` method for one-to-many communication
-- [ ] Add message routing system
-- [ ] Implement message serialization/deserialization
-- [ ] Add support for synchronous and asynchronous communication
-- [ ] **Implement secure communication for client-owned agents**
-- [ ] **Add ownership-aware message routing**
-- [ ] **Implement AWS SQS integration for message queuing**
-- [ ] **Add EventBridge integration for event-based communication**
+- [x] Implement `send_message` method for agent-to-agent communication
+- [x] Implement `broadcast_message` method for one-to-many communication
+- [x] Add message routing system
+- [x] Implement message serialization/deserialization
+- [x] Add support for synchronous and asynchronous communication
+- [x] **Implement secure communication for client-owned agents**
+- [x] **Add ownership-aware message routing**
+- [x] **Implement AWS SQS integration for message queuing**
+- [x] **Add EventBridge integration for event-based communication**
 
 ### CrewAI Adapter (`src/agent_framework/framework_adapters/crewai_adapter.py`)
 
@@ -275,7 +275,7 @@ Tasks:
 - [ ] Create unit tests for Component Registry
 - [x] Create unit tests for Config Manager
 - [ ] Create unit tests for Base Agent
-- [ ] Create unit tests for Agent Communication
+- [x] Create unit tests for Agent Communication
 - [ ] Create unit tests for Framework Adapters
 - [ ] Create unit tests for Resource Monitor
 - [ ] Create unit tests for Quality Controller
