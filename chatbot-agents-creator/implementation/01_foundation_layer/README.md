@@ -1,12 +1,12 @@
 # Foundation Layer (Core Infrastructure & Framework)
 
-# ⚠️ CURRENT TASK ⚠️
+# ⚠️ IMPORTANT ⚠️
 
-**TASK: Implement Component Registry**
+## FOLLOW THESE INSTRUCTIONS ONLY: [NEXT_STEPS.md](./NEXT_STEPS.md)
 
-**INSTRUCTIONS: See [TASKS.md](./TASKS.md) for details**
+**IGNORE ALL OTHER DOCUMENTATION EXCEPT NEXT_STEPS.md**
 
-All development is done on the `development` branch. We follow a simplified workflow with sequential task implementation.
+The NEXT_STEPS.md file contains the only instructions you need to follow.
 
 ---
 
