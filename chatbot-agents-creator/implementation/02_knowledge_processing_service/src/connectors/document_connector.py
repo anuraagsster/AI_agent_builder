@@ -24,6 +24,7 @@ class DocumentConnector(ConnectorBase):
         self.file_types = config.get('file_types', ['pdf', 'docx', 'txt'])
         self.recursive = config.get('recursive', False)
         self.files = []
+        self.version = "1.0.0"  # Adding version for compatibility checking
         
     def connect(self) -> bool:
         """
@@ -132,7 +133,8 @@ class DocumentConnector(ConnectorBase):
             'file_path': self.file_path,
             'file_types': self.file_types,
             'file_count': len(self.files),
-            'metadata': self.metadata
+            'metadata': self.metadata,
+            'version': self.version  # Adding version to metadata
         }
         
     def _is_supported_file(self, file_path: str) -> bool:
