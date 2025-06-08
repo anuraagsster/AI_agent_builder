@@ -168,8 +168,8 @@ Tasks:
 - [x] Add priority queue for tasks
 - [x] Implement task completion handling
 - [x] Add agent utilization tracking
-- [ ] **Add AWS Step Functions integration for complex workflows**
-- [ ] **Implement DynamoDB integration for task storage**
+- [x] **Add AWS Step Functions integration for complex workflows**
+- [x] **Implement DynamoDB integration for task storage**
 - [ ] **Add client-specific task isolation**
 
 ### Resource Monitor (`src/workload_management/resource_monitor.py`)
@@ -277,6 +277,7 @@ Tasks:
 - [x] Create unit tests for Base Agent
 - [x] Create unit tests for Agent Communication
 - [x] Create unit tests for Framework Adapters
+- [x] Create unit tests for Task Distributor
 - [ ] Create unit tests for Resource Monitor
 - [ ] Create unit tests for Quality Controller
 - [ ] **Create unit tests for serverless functions**
