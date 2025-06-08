@@ -4,9 +4,9 @@
 
 **TASK: Implement Component Registry**
 
-**BRANCH: task/component-registry-implementation**
+**BRANCH: feature/component-registry-implementation**
 
-**INSTRUCTIONS: [COMPONENT_REGISTRY_TASK.md](./COMPONENT_REGISTRY_TASK.md)**
+**INSTRUCTIONS: [component_registry_task.md](./task_assignments/component_registry_task.md)**
 
 Junior Developer: Please checkout ONLY this branch and follow the instructions in the linked file. Do not work on any other branches or tasks until this task is completed and approved.
 
