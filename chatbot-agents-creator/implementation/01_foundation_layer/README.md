@@ -1,14 +1,12 @@
 # Foundation Layer (Core Infrastructure & Framework)
 
-# ⚠️ CURRENT ACTIVE TASK ⚠️
+# ⚠️ CURRENT TASK ⚠️
 
 **TASK: Implement Component Registry**
 
-**BRANCH: feature/component-registry-implementation**
+**INSTRUCTIONS: See [TASKS.md](./TASKS.md) for details**
 
-**INSTRUCTIONS: [component_registry_task.md](./task_assignments/component_registry_task.md)**
-
-Junior Developer: Please checkout ONLY this branch and follow the instructions in the linked file. Do not work on any other branches or tasks until this task is completed and approved.
+All development is done on the `development` branch. We follow a simplified workflow with sequential task implementation.
 
 ---
 
@@ -223,13 +221,13 @@ pytest tests/ --cov=src --cov-report=term-missing
 
 ## Development Workflow
 
-This project follows a structured GitHub workflow:
+This project follows a simplified workflow:
 
-1. **Issues**: All development tasks are tracked as GitHub issues using the provided issue template
-2. **Branches**: Create feature branches from main for each issue
-3. **Pull Requests**: Submit PRs using the PR template when features are complete
-4. **Code Review**: All PRs require at least one review before merging
-5. **CI/CD**: Automated tests run on all PRs and pushes to main
+1. **Tasks**: All development tasks are tracked in the [TASKS.md](./TASKS.md) file
+2. **Single Branch**: All development is done on the `development` branch
+3. **Sequential Implementation**: Tasks are implemented one at a time in priority order
+4. **Code Review**: Code is reviewed before moving to the next task
+5. **CI/CD**: Automated tests run on all pushes to the development branch
 
 For more details, see the [GitHub Workflow Guide](github_workflow_guide.md).
 
@@ -257,19 +255,19 @@ For more details, see the [GitHub Workflow Guide](github_workflow_guide.md).
 ## Documentation
 
 - [Getting Started Guide](getting_started_guide.md)
+- [Tasks](TASKS.md)
 - [Implementation Status](implementation_status.md)
 - [Implementation Guides](implementation_guides/)
-- [Daily Task Assignments](daily_task_assignments.md)
 - [Code Review Checklist](code_review_checklist.md)
 
 ## Contributing
 
 1. Review the [Getting Started Guide](getting_started_guide.md)
-2. Check the [Implementation Status](implementation_status.md) to see what needs work
-3. Find or create an issue for your task
+2. Check the [Tasks](TASKS.md) file to see what needs work
+3. Work on the current task in the development branch
 4. Follow the [GitHub Workflow Guide](github_workflow_guide.md)
 5. Ensure your code follows the design principles and passes all tests
-6. Submit a pull request with a clear description of your changes
+6. Commit your changes with a clear description
 
 ## License
 
