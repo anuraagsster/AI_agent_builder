@@ -5,15 +5,19 @@ You are assigned to implement the Component Registry, which is a core architectu
 
 ## Getting Started
 
-1. Clone the repository:
+1. Make sure your local repository is up to date:
    ```bash
-   git clone https://github.com/anuraagsster/AI_agent_builder.git
-   cd AI_agent_builder
+   git checkout development
+   git pull origin development
    ```
 
-2. Checkout the feature branch:
+2. Checkout the feature branch for this task:
    ```bash
    git checkout feature/component-registry-implementation
+   ```
+   If the branch doesn't exist, create it:
+   ```bash
+   git checkout -b feature/component-registry-implementation
    ```
 
 3. Install the required dependencies:
@@ -52,7 +56,7 @@ You are assigned to implement the Component Registry, which is a core architectu
 
 ## Submission Process
 1. Implement the required functionality in this feature branch
-2. Write unit tests to verify your implementation
+2. Write comprehensive unit tests
 3. Ensure all tests pass
 4. Commit your changes:
    ```bash
@@ -78,3 +82,11 @@ You are assigned to implement the Component Registry, which is a core architectu
 
 ## Need Help?
 If you have any questions or need clarification, please add comments to your commits or create a draft pull request with your questions.
+
+## Important Notes
+- Please follow the method signatures as specified in the requirements
+- The current implementation in `component_registry.py` is just a skeleton and needs to be completely updated
+- Refer to the implementation guide for detailed implementation examples
+- Make sure to handle error cases gracefully
+- Add appropriate logging
+- Consider client ownership in your implementation
