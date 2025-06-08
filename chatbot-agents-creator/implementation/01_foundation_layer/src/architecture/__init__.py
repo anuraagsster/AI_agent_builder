@@ -2,4 +2,4 @@
 # This package contains components for system architecture,
 # component registration, and extension system
 
-from .component_registry import ComponentRegistry, ExtensionSystem
+from .component_registry import ComponentRegistry, ExtensionSystem, ComponentMetadata

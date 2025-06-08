@@ -2,4 +2,4 @@
 # This package contains components for managing configuration
 # and dependencies
 
-from .config_manager import ConfigManager, DependencyManager
+from .config_manager import ConfigManager
