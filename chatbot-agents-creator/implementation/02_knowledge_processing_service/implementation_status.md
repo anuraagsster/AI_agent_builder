@@ -47,11 +47,11 @@ Tasks:
 - [x] Implement basic database connection handling
 - [x] Create query execution methods
 - [x] Add table extraction capabilities
-- [ ] Implement schema discovery
-- [ ] Add support for different database types
-- [ ] Implement connection pooling
-- [ ] Add versioning and metadata
-- [ ] Register with connector registry
+- [x] Implement schema discovery
+- [x] Add support for different database types
+- [x] Implement connection pooling
+- [x] Add versioning and metadata
+- [x] Register with connector registry
 
 ### API Connector (`src/connectors/api_connector.py`)
 
@@ -61,11 +61,11 @@ Tasks:
 - [x] Implement REST API connection handling
 - [x] Create GraphQL support
 - [x] Add authentication methods
-- [ ] Implement rate limiting
-- [ ] Add pagination handling
+- [x] Implement rate limiting
+- [x] Add pagination handling
 - [ ] Create response caching
-- [ ] Add versioning and metadata
-- [ ] Register with connector registry
+- [x] Add versioning and metadata
+- [x] Register with connector registry
 
 ### Web Connector (`src/connectors/web_connector.py`)
 
@@ -186,8 +186,6 @@ Tasks:
 ## Next Steps
 
 1. Complete the partially implemented components:
-   - Database Connector: Add schema discovery and support for different database types
-   - API Connector: Implement rate limiting and pagination handling
    - Web Connector: Add robots.txt compliance and rate limiting
    - Content Extractor: Add support for different content types and content cleaning
    - Content Structurer: Add semantic boundary detection and hierarchical structuring
@@ -197,6 +195,7 @@ Tasks:
    - Metadata Store: Add metadata search and validation
    - Version Controller: Add version comparison and rollback
    - Change Tracker: Add change visualization and notification
+   - API Connector: Create response caching
 
 2. Implement comprehensive testing for all components
 

@@ -8,6 +8,16 @@ class DatabaseConnector(ConnectorBase):
     This connector extracts content from database systems.
     """
     
+    # Supported database types and their corresponding drivers
+    SUPPORTED_DB_TYPES = {
+        'mysql': 'mysql.connector',
+        'postgresql': 'psycopg2',
+        'mongodb': 'pymongo',
+        'sqlite': 'sqlite3',
+        'oracle': 'cx_Oracle',
+        'sqlserver': 'pyodbc'
+    }
+    
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize the database connector.
@@ -18,13 +28,19 @@ class DatabaseConnector(ConnectorBase):
                 - connection_string: Database connection string
                 - query: Query to extract data (SQL query or NoSQL equivalent)
                 - tables: List of tables/collections to extract from (if no query provided)
+                - schema: Optional schema name to limit discovery (for SQL databases)
+                - connection_pool_size: Optional connection pool size (default: 5)
         """
         super().__init__(config)
         self.db_type = config.get('db_type', '')
         self.connection_string = config.get('connection_string', '')
         self.query = config.get('query', '')
         self.tables = config.get('tables', [])
+        self.schema = config.get('schema', None)
+        self.connection_pool_size = config.get('connection_pool_size', 5)
         self.connection = None
+        self.connection_pool = []
+        self.schema_cache = {}
         
     def connect(self) -> bool:
         """
@@ -76,6 +92,9 @@ class DatabaseConnector(ConnectorBase):
         
         if not self.db_type:
             result['errors'].append('No database type specified')
+        elif self.db_type not in self.SUPPORTED_DB_TYPES:
+            result['errors'].append(f'Unsupported database type: {self.db_type}. '
+                                   f'Supported types: {", ".join(self.SUPPORTED_DB_TYPES.keys())}')
             
         if not self.connection_string:
             result['errors'].append('No connection string specified')
@@ -92,10 +111,24 @@ class DatabaseConnector(ConnectorBase):
                 result['errors'].append('Failed to connect to database')
                 return result
                 
-        # In a real implementation, this would check if tables exist
-        # and if the query is valid
+        # Check if tables exist
         if self.tables:
-            result['tables'] = self.tables
+            schema_info = self.discover_schema()
+            available_tables = schema_info.get('tables', [])
+            available_table_names = [t.get('name') for t in available_tables]
+            
+            for table in self.tables:
+                if table not in available_table_names:
+                    result['warnings'].append(f'Table {table} not found in database')
+                else:
+                    result['tables'].append(table)
+        
+        # Validate query if provided
+        if self.query:
+            # In a real implementation, this would validate the query syntax
+            # For now, just check if it's not empty
+            if len(self.query.strip()) == 0:
+                result['warnings'].append('Query is empty')
             
         result['valid'] = len(result['errors']) == 0
         return result
@@ -178,12 +211,230 @@ class DatabaseConnector(ConnectorBase):
         In a real implementation, this would query the table and return results.
         For now, this is just a placeholder.
         """
+        # Get table schema
+        table_schema = self._get_table_schema(table)
+        
         # Placeholder implementation
         return [{
             'content': f"[Table data from {table} in {self.db_type} database]",
             'metadata': {
                 'table': table,
-                'db_type': self.db_type
+                'db_type': self.db_type,
+                'schema': table_schema
             },
             'source_path': f"{self.db_type}://{self.source_id}/{table}"
         }]
+    
+    def discover_schema(self) -> Dict[str, Any]:
+        """
+        Discover the schema of the database.
+        
+        Returns:
+            Dictionary with database schema information
+        """
+        # Check if schema is already cached
+        if self.schema_cache:
+            return self.schema_cache
+        
+        if not self.connection:
+            if not self.connect():
+                return {'tables': [], 'relationships': []}
+        
+        schema_info = {
+            'tables': [],
+            'relationships': []
+        }
+        
+        # In a real implementation, this would query the database metadata
+        # For now, this is just a placeholder implementation
+        if self.db_type in ['mysql', 'postgresql', 'sqlite', 'oracle', 'sqlserver']:
+            # SQL databases
+            if self.tables:
+                # If tables are specified, only get schema for those tables
+                for table in self.tables:
+                    table_info = self._get_table_schema(table)
+                    schema_info['tables'].append(table_info)
+            else:
+                # Otherwise, discover all tables
+                schema_info['tables'] = self._discover_all_tables()
+                
+            # Discover relationships between tables
+            schema_info['relationships'] = self._discover_relationships()
+            
+        elif self.db_type == 'mongodb':
+            # MongoDB collections
+            if self.tables:
+                # If collections are specified, only get schema for those collections
+                for collection in self.tables:
+                    collection_info = self._get_collection_schema(collection)
+                    schema_info['tables'].append(collection_info)
+            else:
+                # Otherwise, discover all collections
+                schema_info['tables'] = self._discover_all_collections()
+        
+        # Cache the schema
+        self.schema_cache = schema_info
+        return schema_info
+    
+    def _get_table_schema(self, table: str) -> Dict[str, Any]:
+        """
+        Get the schema of a table.
+        
+        Args:
+            table: Table name
+            
+        Returns:
+            Dictionary with table schema information
+        """
+        # In a real implementation, this would query the database metadata
+        # For now, this is just a placeholder implementation
+        return {
+            'name': table,
+            'type': 'table',
+            'columns': [
+                {'name': 'id', 'type': 'INTEGER', 'primary_key': True},
+                {'name': 'name', 'type': 'VARCHAR', 'nullable': False},
+                {'name': 'description', 'type': 'TEXT', 'nullable': True},
+                {'name': 'created_at', 'type': 'TIMESTAMP', 'nullable': False}
+            ]
+        }
+    
+    def _get_collection_schema(self, collection: str) -> Dict[str, Any]:
+        """
+        Get the schema of a MongoDB collection.
+        
+        Args:
+            collection: Collection name
+            
+        Returns:
+            Dictionary with collection schema information
+        """
+        # In a real implementation, this would analyze the collection documents
+        # For now, this is just a placeholder implementation
+        return {
+            'name': collection,
+            'type': 'collection',
+            'fields': [
+                {'name': '_id', 'type': 'ObjectId'},
+                {'name': 'name', 'type': 'String'},
+                {'name': 'description', 'type': 'String'},
+                {'name': 'created_at', 'type': 'Date'}
+            ]
+        }
+    
+    def _discover_all_tables(self) -> List[Dict[str, Any]]:
+        """
+        Discover all tables in the database.
+        
+        Returns:
+            List of table schema information
+        """
+        # In a real implementation, this would query the database metadata
+        # For now, this is just a placeholder implementation
+        return [
+            self._get_table_schema('users'),
+            self._get_table_schema('products'),
+            self._get_table_schema('orders')
+        ]
+    
+    def _discover_all_collections(self) -> List[Dict[str, Any]]:
+        """
+        Discover all collections in the MongoDB database.
+        
+        Returns:
+            List of collection schema information
+        """
+        # In a real implementation, this would query the MongoDB database
+        # For now, this is just a placeholder implementation
+        return [
+            self._get_collection_schema('users'),
+            self._get_collection_schema('products'),
+            self._get_collection_schema('orders')
+        ]
+    
+    def _discover_relationships(self) -> List[Dict[str, Any]]:
+        """
+        Discover relationships between tables.
+        
+        Returns:
+            List of relationship information
+        """
+        # In a real implementation, this would query the database metadata
+        # For now, this is just a placeholder implementation
+        return [
+            {
+                'from_table': 'orders',
+                'from_column': 'user_id',
+                'to_table': 'users',
+                'to_column': 'id',
+                'type': 'foreign_key'
+            },
+            {
+                'from_table': 'orders',
+                'from_column': 'product_id',
+                'to_table': 'products',
+                'to_column': 'id',
+                'type': 'foreign_key'
+            }
+        ]
+    
+    def initialize_connection_pool(self) -> bool:
+        """
+        Initialize a connection pool for better performance.
+        
+        Returns:
+            True if pool initialization successful, False otherwise
+        """
+        if not self.connection_string or not self.db_type:
+            return False
+            
+        try:
+            # Close existing connections
+            self.close()
+            
+            # Create new connection pool
+            for _ in range(self.connection_pool_size):
+                # In a real implementation, this would create actual database connections
+                # For now, this is just a placeholder
+                if self.db_type == 'mysql':
+                    self.connection_pool.append("MySQL Connection")
+                elif self.db_type == 'postgresql':
+                    self.connection_pool.append("PostgreSQL Connection")
+                elif self.db_type == 'mongodb':
+                    self.connection_pool.append("MongoDB Connection")
+                elif self.db_type == 'sqlite':
+                    self.connection_pool.append("SQLite Connection")
+                elif self.db_type == 'oracle':
+                    self.connection_pool.append("Oracle Connection")
+                elif self.db_type == 'sqlserver':
+                    self.connection_pool.append("SQL Server Connection")
+                else:
+                    return False
+            
+            # Set the first connection as the main connection
+            if self.connection_pool:
+                self.connection = self.connection_pool[0]
+                
+            return True
+        except Exception as e:
+            # In a real implementation, this would log the error
+            print(f"Error initializing connection pool: {str(e)}")
+            return False
+    
+    def close(self) -> None:
+        """
+        Close the database connection and connection pool.
+        """
+        # Close the main connection
+        if self.connection:
+            # In a real implementation, this would close the connection
+            # self.connection.close()
+            self.connection = None
+            
+        # Close all connections in the pool
+        for conn in self.connection_pool:
+            # In a real implementation, this would close each connection
+            # conn.close()
+            pass
+            
+        self.connection_pool = []
