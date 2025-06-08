@@ -11,13 +11,13 @@ You are assigned to implement the Component Registry, which is a core architectu
    git pull origin development
    ```
 
-2. Checkout the feature branch for this task:
+2. Checkout the task branch for this task:
    ```bash
-   git checkout feature/component-registry-implementation
+   git checkout task/component-registry-implementation
    ```
    If the branch doesn't exist, create it:
    ```bash
-   git checkout -b feature/component-registry-implementation
+   git checkout -b task/component-registry-implementation
    ```
 
 3. Install the required dependencies:
@@ -62,9 +62,9 @@ You are assigned to implement the Component Registry, which is a core architectu
    ```bash
    git add .
    git commit -m "Implement Component Registry"
-   git push origin feature/component-registry-implementation
+   git push origin task/component-registry-implementation
    ```
-5. Create a pull request from `feature/component-registry-implementation` to `development`
+5. Create a pull request from `task/component-registry-implementation` to `development`
 6. Assign the pull request to the supervisor for review
 
 ## Acceptance Criteria
