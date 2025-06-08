@@ -145,15 +145,15 @@ Tasks:
 
 ### MCP Adapter (`src/agent_framework/framework_adapters/mcp_adapter.py`)
 
-Status: ⬜ Not Started
+Status: 🟢 Complete
 
 Tasks:
-- [ ] Implement MCP SDK integration
-- [ ] Create framework-agnostic interfaces
-- [ ] Add support for MCP-specific features
-- [ ] Implement conversion between our system and MCP formats
-- [ ] **Add ownership metadata preservation in MCP integration**
-- [ ] **Implement export compatibility for MCP agents**
+- [x] Implement MCP SDK integration
+- [x] Create framework-agnostic interfaces
+- [x] Add support for MCP-specific features
+- [x] Implement conversion between our system and MCP formats
+- [x] **Add ownership metadata preservation in MCP integration**
+- [x] **Implement export compatibility for MCP agents**
 
 ## Workload Management System
 
@@ -395,7 +395,7 @@ graph TD
 5. Task Distributor ✅
 6. Resource Monitor 🟡
 7. Quality Controller 🟡
-8. Framework Adapters 🟡
+8. Framework Adapters 🟢
 9. Resource Abstraction ⬜
 10. Extension System 🟡
 11. **Ownership Metadata** ⬜
