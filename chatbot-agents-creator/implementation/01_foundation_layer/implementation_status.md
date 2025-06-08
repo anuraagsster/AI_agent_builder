@@ -132,16 +132,16 @@ Tasks:
 
 ### CrewAI Adapter (`src/agent_framework/framework_adapters/crewai_adapter.py`)
 
-Status: ⬜ Not Started
+Status: 🟢 Complete
 
 Tasks:
-- [ ] Implement `create_crewai_agent` method to convert our agent config to CrewAI
-- [ ] Implement `convert_task` method to translate task formats
-- [ ] Implement `process_result` method to convert CrewAI results to our format
-- [ ] Add framework capability discovery
-- [ ] Implement framework version management
-- [ ] **Add ownership metadata preservation in framework conversion**
-- [ ] **Implement export compatibility for CrewAI agents**
+- [x] Implement `create_crewai_agent` method to convert our agent config to CrewAI
+- [x] Implement `convert_task` method to translate task formats
+- [x] Implement `process_result` method to convert CrewAI results to our format
+- [x] Add framework capability discovery
+- [x] Implement framework version management
+- [x] **Add ownership metadata preservation in framework conversion**
+- [x] **Implement export compatibility for CrewAI agents**
 
 ### MCP Adapter (`src/agent_framework/framework_adapters/mcp_adapter.py`)
 
@@ -276,7 +276,7 @@ Tasks:
 - [x] Create unit tests for Config Manager
 - [x] Create unit tests for Base Agent
 - [x] Create unit tests for Agent Communication
-- [ ] Create unit tests for Framework Adapters
+- [x] Create unit tests for Framework Adapters
 - [ ] Create unit tests for Resource Monitor
 - [ ] Create unit tests for Quality Controller
 - [ ] **Create unit tests for serverless functions**
@@ -395,7 +395,7 @@ graph TD
 5. Task Distributor ✅
 6. Resource Monitor 🟡
 7. Quality Controller 🟡
-8. Framework Adapters ⬜
+8. Framework Adapters 🟡
 9. Resource Abstraction ⬜
 10. Extension System 🟡
 11. **Ownership Metadata** ⬜
