@@ -1,5 +1,17 @@
 # Foundation Layer Daily Task Assignments
 
+# ⚠️ CURRENT ACTIVE TASK ⚠️
+
+**TASK: Implement Component Registry**
+
+**BRANCH: task/component-registry-implementation**
+
+**INSTRUCTIONS: [COMPONENT_REGISTRY_TASK.md](./COMPONENT_REGISTRY_TASK.md)**
+
+Junior Developer: Please checkout ONLY this branch and follow the instructions in the linked file. Do not work on any other branches or tasks until this task is completed and approved.
+
+---
+
 This document breaks down the implementation tasks for the Foundation Layer into daily assignments for junior developers. Each day's tasks are designed to be completable within a single workday and represent a logical grouping of related functionality.
 
 ## Week 1: Core Infrastructure

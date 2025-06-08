@@ -1,5 +1,17 @@
 # Foundation Layer (Core Infrastructure & Framework)
 
+# ⚠️ CURRENT ACTIVE TASK ⚠️
+
+**TASK: Implement Component Registry**
+
+**BRANCH: task/component-registry-implementation**
+
+**INSTRUCTIONS: [COMPONENT_REGISTRY_TASK.md](./COMPONENT_REGISTRY_TASK.md)**
+
+Junior Developer: Please checkout ONLY this branch and follow the instructions in the linked file. Do not work on any other branches or tasks until this task is completed and approved.
+
+---
+
 ## Overview
 
 The Foundation Layer provides the core infrastructure and framework components upon which the entire Autonomous AI Agent Creator System is built. This layer establishes the fundamental principles of Scalability, Modularity, Autonomy, and Future-Proofing that will guide the development of all other components.
