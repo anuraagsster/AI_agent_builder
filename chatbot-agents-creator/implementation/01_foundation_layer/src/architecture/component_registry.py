@@ -13,6 +13,8 @@ class ComponentMetadata:
     dependencies: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
     config_schema: Dict[str, Any] = field(default_factory=dict)
+    owner_id: Optional[str] = None  # Client ownership identifier
+    exportable: bool = False  # Whether component can be exported
 
 class ComponentRegistry:
     """
@@ -80,6 +82,22 @@ class ComponentRegistry:
             List of component IDs
         """
         return list(self._components.keys())
+        
+    def get_components_by_owner(self, owner_id: str) -> List[Any]:
+        """
+        Get all components owned by a specific client
+        
+        Args:
+            owner_id: Client ownership identifier
+            
+        Returns:
+            List of component instances owned by the client
+        """
+        result = []
+        for component_id, metadata in self._metadata.items():
+            if hasattr(metadata, 'owner_id') and metadata.owner_id == owner_id:
+                result.append(self._components[component_id])
+        return result
     
     def get_metadata(self, component_id: str) -> Optional[ComponentMetadata]:
         """
@@ -129,6 +147,80 @@ class ComponentRegistry:
             if tag in metadata.tags:
                 result.append(self._components[component_id])
         return result
+        
+    def export_component(self, component_id: str, format: str = "json") -> Dict[str, Any]:
+        """
+        Export a component for client deployment
+        
+        Args:
+            component_id: ID of the component to export
+            format: Export format (json, yaml)
+            
+        Returns:
+            Dictionary with component export data
+        """
+        if component_id not in self._components:
+            self._logger.warning(f"Component {component_id} not found in registry")
+            return {}
+            
+        metadata = self._metadata[component_id]
+        if not hasattr(metadata, 'exportable') or not metadata.exportable:
+            self._logger.warning(f"Component {component_id} is not exportable")
+            return {}
+            
+        component = self._components[component_id]
+        
+        # Check if component has export method
+        if hasattr(component, 'prepare_for_export') and callable(getattr(component, 'prepare_for_export')):
+            try:
+                return component.prepare_for_export()
+            except Exception as e:
+                self._logger.error(f"Error exporting component {component_id}: {str(e)}")
+                return {}
+        
+        # Default export format if component doesn't have export method
+        export_data = {
+            "component_id": component_id,
+            "metadata": {
+                "name": metadata.name,
+                "version": metadata.version,
+                "description": metadata.description,
+                "owner_id": metadata.owner_id,
+                "exported_at": "2025-08-06T15:30:00Z",  # In a real implementation, use actual timestamp
+            },
+            "configuration": {}  # Would include safe configuration values
+        }
+        
+        return export_data
+        
+    def access_component(self, component_id: str, requester_id: str) -> Optional[Any]:
+        """
+        Access a component with ownership validation
+        
+        Args:
+            component_id: ID of the component to access
+            requester_id: ID of the requester
+            
+        Returns:
+            Component instance or None if access denied
+        """
+        if component_id not in self._components:
+            self._logger.warning(f"Component {component_id} not found in registry")
+            return None
+            
+        metadata = self._metadata[component_id]
+        
+        # System components can be accessed by anyone
+        if not hasattr(metadata, 'owner_id') or metadata.owner_id is None:
+            return self._components[component_id]
+            
+        # Client components can only be accessed by their owner
+        if metadata.owner_id == requester_id:
+            return self._components[component_id]
+            
+        # Access denied
+        self._logger.warning(f"Access denied: {requester_id} cannot access {component_id}")
+        return None
     
     def _resolve_dependencies(self) -> List[str]:
         """
@@ -284,7 +376,7 @@ class ExtensionSystem:
         self._extensions[name] = {}
         self._logger.info(f"Registered extension point: {name}")
         
-    def register_extension(self, point_name: str, extension: Any, name: Optional[str] = None) -> None:
+    def register_extension(self, point_name: str, extension: Any, name: Optional[str] = None, owner_id: Optional[str] = None) -> None:
         """
         Register an extension to a specific extension point
         
@@ -292,6 +384,7 @@ class ExtensionSystem:
             point_name: Name of the extension point
             extension: Extension instance
             name: Optional name for the extension (defaults to class name)
+            owner_id: Optional client ownership identifier
         """
         if point_name not in self._extension_points:
             raise ValueError(f"Extension point {point_name} not registered")
@@ -319,7 +412,9 @@ class ExtensionSystem:
                 ComponentMetadata(
                     name=f"extension.{point_name}.{name}",
                     version="1.0.0",
-                    description=f"Extension {name} for {point_name}"
+                    description=f"Extension {name} for {point_name}",
+                    owner_id=owner_id,
+                    exportable=(owner_id is not None)
                 )
             )
     
@@ -337,6 +432,65 @@ class ExtensionSystem:
             raise ValueError(f"Extension point {point_name} not registered")
             
         return list(self._extensions[point_name].values())
+        
+    def get_extensions_by_owner(self, point_name: str, owner_id: str) -> List[Any]:
+        """
+        Get extensions owned by a specific client
+        
+        Args:
+            point_name: Name of the extension point
+            owner_id: Client ownership identifier
+            
+        Returns:
+            List of extension instances owned by the client
+        """
+        if point_name not in self._extension_points:
+            raise ValueError(f"Extension point {point_name} not registered")
+            
+        result = []
+        for name, extension in self._extensions[point_name].items():
+            # Check if extension is registered in component registry
+            if self._registry:
+                extension_id = f"extension.{point_name}.{name}"
+                metadata = self._registry.get_metadata(extension_id)
+                if metadata and hasattr(metadata, 'owner_id') and metadata.owner_id == owner_id:
+                    result.append(extension)
+        
+        return result
+        
+    def export_extensions(self, owner_id: str) -> Dict[str, Any]:
+        """
+        Export extensions owned by a client
+        
+        Args:
+            owner_id: Client ownership identifier
+            
+        Returns:
+            Dictionary with extension export data
+        """
+        result = {}
+        
+        # Check if we have a component registry
+        if not self._registry:
+            return result
+            
+        # Find all extensions owned by the client
+        for point_name in self._extension_points:
+            point_extensions = {}
+            for name, extension in self._extensions[point_name].items():
+                extension_id = f"extension.{point_name}.{name}"
+                metadata = self._registry.get_metadata(extension_id)
+                
+                if metadata and hasattr(metadata, 'owner_id') and metadata.owner_id == owner_id:
+                    # Export the extension
+                    export_data = self._registry.export_component(extension_id)
+                    if export_data:
+                        point_extensions[name] = export_data
+            
+            if point_extensions:
+                result[point_name] = point_extensions
+                
+        return result
     
     def remove_extension(self, point_name: str, name: str) -> bool:
         """
