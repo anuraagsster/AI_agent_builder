@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  tool-manager:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: tool-manager:latest
+    container_name: tool-manager
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - AWS_REGION=us-west-2
+    volumes:
+      - ../config:/app/config
+      - ../logs:/app/logs
+      - ../data:/app/data
+    ports:
+      - "8002:8000"
+    networks:
+      - agent-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  tool-registry:
+    build:
+      context: ..
+      dockerfile: deploy/registry.Dockerfile
+    image: tool-registry:latest
+    container_name: tool-registry
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - AWS_REGION=us-west-2
+    volumes:
+      - ../config:/app/config
+      - ../logs:/app/logs
+      - ../data:/app/data
+    networks:
+      - agent-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    depends_on:
+      - tool-manager
+
+  tool-executor:
+    build:
+      context: ..
+      dockerfile: deploy/executor.Dockerfile
+    image: tool-executor:latest
+    container_name: tool-executor
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - AWS_REGION=us-west-2
+    volumes:
+      - ../config:/app/config
+      - ../logs:/app/logs
+      - ../data:/app/data
+    networks:
+      - agent-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    depends_on:
+      - tool-manager
+      - tool-registry
+
+volumes:
+  tool-data:
+
+networks:
+  agent-network:
+    driver: bridge 
