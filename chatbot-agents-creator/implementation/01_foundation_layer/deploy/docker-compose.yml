@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  foundation-layer:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: foundation-layer:latest
+    container_name: foundation-layer
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - AWS_REGION=us-west-2
+    volumes:
+      - ../config:/app/config
+      - ../logs:/app/logs
+    ports:
+      - "8000:8000"
+    networks:
+      - agent-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  resource-monitor:
+    build:
+      context: ..
+      dockerfile: deploy/monitor.Dockerfile
+    image: resource-monitor:latest
+    container_name: resource-monitor
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - AWS_REGION=us-west-2
+    volumes:
+      - ../config:/app/config
+      - ../logs:/app/logs
+    networks:
+      - agent-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    depends_on:
+      - foundation-layer
+
+networks:
+  agent-network:
+    driver: bridge 

@@ -1,0 +1,80 @@
+{
+    "alarms": [
+        {
+            "AlarmName": "HighCPUUsage",
+            "AlarmDescription": "Alarm when CPU usage exceeds 80%",
+            "MetricName": "CPUUsage",
+            "Namespace": "ResourceMonitor",
+            "Statistic": "Average",
+            "Period": 300,
+            "EvaluationPeriods": 2,
+            "Threshold": 80,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "AlarmActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "OKActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "Dimensions": [
+                {
+                    "Name": "Service",
+                    "Value": "FoundationLayer"
+                }
+            ]
+        },
+        {
+            "AlarmName": "HighMemoryUsage",
+            "AlarmDescription": "Alarm when memory usage exceeds 85%",
+            "MetricName": "MemoryUsage",
+            "Namespace": "ResourceMonitor",
+            "Statistic": "Average",
+            "Period": 300,
+            "EvaluationPeriods": 2,
+            "Threshold": 85,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "AlarmActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "OKActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "Dimensions": [
+                {
+                    "Name": "Service",
+                    "Value": "FoundationLayer"
+                }
+            ]
+        },
+        {
+            "AlarmName": "HighErrorRate",
+            "AlarmDescription": "Alarm when error rate exceeds 5%",
+            "MetricName": "ErrorCount",
+            "Namespace": "ResourceMonitor",
+            "Statistic": "Sum",
+            "Period": 300,
+            "EvaluationPeriods": 2,
+            "Threshold": 5,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "AlarmActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "OKActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "Dimensions": [
+                {
+                    "Name": "Service",
+                    "Value": "FoundationLayer"
+                }
+            ]
+        },
+        {
+            "AlarmName": "HighLatency",
+            "AlarmDescription": "Alarm when latency exceeds 1000ms",
+            "MetricName": "Latency",
+            "Namespace": "ResourceMonitor",
+            "Statistic": "Average",
+            "Period": 300,
+            "EvaluationPeriods": 2,
+            "Threshold": 1000,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "AlarmActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "OKActions": ["arn:aws:sns:us-west-2:123456789012:ResourceAlerts"],
+            "Dimensions": [
+                {
+                    "Name": "Service",
+                    "Value": "FoundationLayer"
+                }
+            ]
+        }
+    ]
+} 

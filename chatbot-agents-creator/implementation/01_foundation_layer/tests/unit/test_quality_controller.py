@@ -34,5 +34,30 @@ class TestQualityController(unittest.TestCase):
         self.assertEqual(self.controller.anonymized_feedback['task1'][0]['content'], 'Great job!')
         self.assertEqual(self.controller.anonymized_feedback['task1'][0]['rating'], 5)
 
+    def test_generate_quality_metrics_dashboard(self):
+        # Mock feedback history and anonymized feedback
+        self.controller.feedback_history = {
+            'task1': [
+                {'agent_id': 'agent1', 'score': 0.8, 'client_id': 'client1'},
+                {'agent_id': 'agent2', 'score': 0.7, 'client_id': 'client1'}
+            ]
+        }
+        self.controller.anonymized_feedback = {
+            'task1': [{'content': 'Great job!', 'rating': 5}]
+        }
+        self.controller.quality_metrics = {'metric1': {'evaluation_function': lambda x, y: 0.8, 'threshold': 0.7}}
+        
+        # Test dashboard generation for agent1
+        dashboard = self.controller.generate_quality_metrics_dashboard(agent_id='agent1')
+        self.assertEqual(dashboard['overall_score'], 0.8)
+        self.assertEqual(dashboard['feedback_count'], 1)
+        self.assertEqual(dashboard['anonymized_feedback_count'], 1)
+        
+        # Test dashboard generation for client1
+        dashboard = self.controller.generate_quality_metrics_dashboard(client_id='client1')
+        self.assertEqual(dashboard['overall_score'], 0.75)
+        self.assertEqual(dashboard['feedback_count'], 2)
+        self.assertEqual(dashboard['anonymized_feedback_count'], 1)
+
 if __name__ == '__main__':
     unittest.main() 

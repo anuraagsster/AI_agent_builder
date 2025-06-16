@@ -242,3 +242,53 @@ class QualityController:
             'rating': rating,
             'timestamp': None  # In a real implementation, this would be the current timestamp
         })
+
+    def generate_quality_metrics_dashboard(self, agent_id=None, client_id=None):
+        """
+        Generate a quality metrics dashboard for an agent or client.
+        Args:
+            agent_id: Optional agent ID to filter metrics
+            client_id: Optional client ID to filter metrics
+        Returns:
+            Dict containing aggregated quality metrics and feedback data
+        """
+        dashboard = {
+            'overall_score': 0.0,
+            'metrics': {},
+            'feedback_count': 0,
+            'anonymized_feedback_count': 0
+        }
+        
+        # Aggregate metrics
+        for metric_name, metric_info in self.quality_metrics.items():
+            scores = []
+            for task_id, feedback_list in self.feedback_history.items():
+                for feedback in feedback_list:
+                    if agent_id and feedback['agent_id'] != agent_id:
+                        continue
+                    if client_id and feedback.get('client_id') != client_id:
+                        continue
+                    if 'score' in feedback:
+                        scores.append(feedback['score'])
+            if scores:
+                dashboard['metrics'][metric_name] = sum(scores) / len(scores)
+        
+        # Count feedback
+        for task_id, feedback_list in self.feedback_history.items():
+            for feedback in feedback_list:
+                if agent_id and feedback['agent_id'] != agent_id:
+                    continue
+                if client_id and feedback.get('client_id') != client_id:
+                    continue
+                dashboard['feedback_count'] += 1
+        
+        # Count anonymized feedback
+        if hasattr(self, 'anonymized_feedback'):
+            for task_id, feedback_list in self.anonymized_feedback.items():
+                dashboard['anonymized_feedback_count'] += len(feedback_list)
+        
+        # Calculate overall score
+        if dashboard['metrics']:
+            dashboard['overall_score'] = sum(dashboard['metrics'].values()) / len(dashboard['metrics'])
+        
+        return dashboard

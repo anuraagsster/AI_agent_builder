@@ -1,0 +1,70 @@
+{
+    "widgets": [
+        {
+            "type": "metric",
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    ["ResourceMonitor", "CPUUsage", "Service", "FoundationLayer"],
+                    ["ResourceMonitor", "MemoryUsage", "Service", "FoundationLayer"],
+                    ["ResourceMonitor", "DiskUsage", "Service", "FoundationLayer"]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-west-2",
+                "title": "Resource Usage Overview",
+                "period": 300
+            }
+        },
+        {
+            "type": "metric",
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    ["ResourceMonitor", "RequestCount", "Service", "FoundationLayer"],
+                    ["ResourceMonitor", "ErrorCount", "Service", "FoundationLayer"],
+                    ["ResourceMonitor", "Latency", "Service", "FoundationLayer"]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-west-2",
+                "title": "Service Performance",
+                "period": 300
+            }
+        },
+        {
+            "type": "metric",
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    ["ResourceMonitor", "ClientResourceUsage", "Client", "Client1", "Service", "FoundationLayer"],
+                    ["ResourceMonitor", "ClientResourceUsage", "Client", "Client2", "Service", "FoundationLayer"]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-west-2",
+                "title": "Client-Specific Resource Usage",
+                "period": 300
+            }
+        },
+        {
+            "type": "metric",
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    ["ResourceMonitor", "AutoScalingEvents", "Service", "FoundationLayer"],
+                    ["ResourceMonitor", "ScalingAdjustments", "Service", "FoundationLayer"]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-west-2",
+                "title": "Auto Scaling Events",
+                "period": 300
+            }
+        }
+    ]
+} 
