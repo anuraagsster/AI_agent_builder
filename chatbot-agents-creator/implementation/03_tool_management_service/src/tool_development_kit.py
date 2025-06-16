@@ -3,6 +3,8 @@ import inspect
 import json
 import os
 from .tool_interface import ToolInterface, ParameterSchema, ResultSchema, FunctionTool
+import logging
+import semver
 
 class ToolTemplate:
     """
@@ -247,16 +249,17 @@ class DocumentationGenerator:
     """
     Generator for tool documentation.
     
-    This class generates documentation for tools.
+    This class generates documentation for tools, including update and migration information.
     """
     
     @staticmethod
-    def generate_markdown(tool: ToolInterface) -> str:
+    def generate_markdown(tool: ToolInterface, metadata: ToolMetadata = None) -> str:
         """
         Generate Markdown documentation for a tool.
         
         Args:
             tool: Tool to document
+            metadata: Optional tool metadata
             
         Returns:
             Markdown documentation
@@ -319,17 +322,49 @@ class DocumentationGenerator:
             doc.append("```json")
             doc.append(json.dumps(tool.example, indent=2))
             doc.append("```")
+            doc.append("")
             
+        # Add update information if metadata is provided
+        if metadata:
+            # Add dependencies
+            if metadata.dependencies:
+                doc.append("## Dependencies")
+                doc.append("")
+                for dep_name, dep_version in metadata.dependencies.items():
+                    doc.append(f"- {dep_name}: {dep_version}")
+                doc.append("")
+                
+            # Add changes
+            if hasattr(metadata, 'changes') and metadata.changes:
+                doc.append("## Changes")
+                doc.append("")
+                for change in metadata.changes:
+                    doc.append(f"- {change}")
+                doc.append("")
+                
+            # Add migrations
+            if hasattr(metadata, 'migrations') and metadata.migrations:
+                doc.append("## Migrations")
+                doc.append("")
+                for migration_key, migration_func in metadata.migrations.items():
+                    from_version, to_version = migration_key.split('_to_')
+                    doc.append(f"### {from_version} to {to_version}")
+                    doc.append("")
+                    if hasattr(migration_func, '__doc__') and migration_func.__doc__:
+                        doc.append(migration_func.__doc__)
+                    doc.append("")
+                    
         return "\n".join(doc)
         
     @staticmethod
-    def save_documentation(tool: ToolInterface, directory: str) -> str:
+    def save_documentation(tool: ToolInterface, directory: str, metadata: ToolMetadata = None) -> str:
         """
         Generate and save documentation for a tool.
         
         Args:
             tool: Tool to document
             directory: Directory to save documentation in
+            metadata: Optional tool metadata
             
         Returns:
             Path to the documentation file
@@ -338,7 +373,7 @@ class DocumentationGenerator:
         os.makedirs(directory, exist_ok=True)
         
         # Generate documentation
-        doc = DocumentationGenerator.generate_markdown(tool)
+        doc = DocumentationGenerator.generate_markdown(tool, metadata)
         
         # Save to file
         filename = f"{tool.name.lower().replace(' ', '_')}.md"
@@ -348,3 +383,213 @@ class DocumentationGenerator:
             f.write(doc)
             
         return filepath
+
+
+class ToolUpdater:
+    """
+    Handles tool updates and version management.
+    
+    This class manages the process of updating tools to new versions,
+    including dependency resolution and compatibility checking.
+    """
+    
+    def __init__(self, registry: ToolRegistry):
+        """
+        Initialize the tool updater.
+        
+        Args:
+            registry: Tool registry to use
+        """
+        self.registry = registry
+        self.logger = logging.getLogger(__name__)
+        
+    def check_for_updates(self, tool_name: str) -> List[Dict[str, Any]]:
+        """
+        Check for available updates for a tool.
+        
+        Args:
+            tool_name: Name of the tool to check
+            
+        Returns:
+            List of available updates
+        """
+        if tool_name not in self.registry.tools:
+            return []
+            
+        current_versions = list(self.registry.tools[tool_name].keys())
+        current_versions.sort(key=lambda v: semver.VersionInfo.parse(v))
+        latest_version = current_versions[-1]
+        
+        updates = []
+        for version in current_versions:
+            if semver.compare(version, latest_version) < 0:
+                tool, metadata = self.registry.tools[tool_name][version]
+                updates.append({
+                    'version': version,
+                    'description': metadata.description,
+                    'changes': metadata.changes if hasattr(metadata, 'changes') else [],
+                    'dependencies': metadata.dependencies
+                })
+                
+        return updates
+        
+    def update_tool(self, tool_name: str, target_version: str) -> bool:
+        """
+        Update a tool to a specific version.
+        
+        Args:
+            tool_name: Name of the tool to update
+            target_version: Version to update to
+            
+        Returns:
+            True if update was successful, False otherwise
+        """
+        if tool_name not in self.registry.tools:
+            return False
+            
+        # Check if target version exists
+        if target_version not in self.registry.tools[tool_name]:
+            return False
+            
+        # Get current version
+        current_versions = list(self.registry.tools[tool_name].keys())
+        current_versions.sort(key=lambda v: semver.VersionInfo.parse(v))
+        current_version = current_versions[-1]
+        
+        # Check if update is needed
+        if semver.compare(current_version, target_version) >= 0:
+            return True
+            
+        # Get tool and metadata
+        tool, metadata = self.registry.tools[tool_name][target_version]
+        
+        # Check dependencies
+        unsatisfied = self.registry.check_dependencies(tool_name, target_version)
+        if unsatisfied:
+            self.logger.error(f"Unsatisfied dependencies: {unsatisfied}")
+            return False
+            
+        # Perform update
+        try:
+            # In a real implementation, this would handle the actual update process
+            # For now, just log the update
+            self.logger.info(f"Updating {tool_name} from {current_version} to {target_version}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to update tool: {e}")
+            return False
+
+
+class ToolMigrator:
+    """
+    Handles tool migrations and compatibility.
+    
+    This class manages the process of migrating tools between versions,
+    including schema changes and data transformations.
+    """
+    
+    def __init__(self, registry: ToolRegistry):
+        """
+        Initialize the tool migrator.
+        
+        Args:
+            registry: Tool registry to use
+        """
+        self.registry = registry
+        self.logger = logging.getLogger(__name__)
+        
+    def get_migration_path(self, tool_name: str, from_version: str, to_version: str) -> List[str]:
+        """
+        Get the migration path between two versions.
+        
+        Args:
+            tool_name: Name of the tool
+            from_version: Source version
+            to_version: Target version
+            
+        Returns:
+            List of versions in the migration path
+        """
+        if tool_name not in self.registry.tools:
+            return []
+            
+        # Get all versions
+        versions = list(self.registry.tools[tool_name].keys())
+        versions.sort(key=lambda v: semver.VersionInfo.parse(v))
+        
+        # Find indices of from and to versions
+        try:
+            from_idx = versions.index(from_version)
+            to_idx = versions.index(to_version)
+        except ValueError:
+            return []
+            
+        # Return versions in the path
+        if from_idx < to_idx:
+            return versions[from_idx:to_idx + 1]
+        else:
+            return versions[to_idx:from_idx + 1][::-1]
+            
+    def migrate_data(self, tool_name: str, data: Dict[str, Any], 
+                    from_version: str, to_version: str) -> Dict[str, Any]:
+        """
+        Migrate data between tool versions.
+        
+        Args:
+            tool_name: Name of the tool
+            data: Data to migrate
+            from_version: Source version
+            to_version: Target version
+            
+        Returns:
+            Migrated data
+        """
+        if tool_name not in self.registry.tools:
+            return data
+            
+        # Get migration path
+        path = self.get_migration_path(tool_name, from_version, to_version)
+        if not path:
+            return data
+            
+        # Apply migrations in sequence
+        current_data = data
+        for i in range(len(path) - 1):
+            current_version = path[i]
+            next_version = path[i + 1]
+            
+            # Get migration function
+            migration_func = self._get_migration_function(tool_name, current_version, next_version)
+            if migration_func:
+                try:
+                    current_data = migration_func(current_data)
+                except Exception as e:
+                    self.logger.error(f"Migration failed: {e}")
+                    return None
+                    
+        return current_data
+        
+    def _get_migration_function(self, tool_name: str, from_version: str, 
+                              to_version: str) -> Optional[Callable]:
+        """
+        Get the migration function between two versions.
+        
+        Args:
+            tool_name: Name of the tool
+            from_version: Source version
+            to_version: Target version
+            
+        Returns:
+            Migration function, or None if not found
+        """
+        if tool_name not in self.registry.tools:
+            return None
+            
+        # Get tool metadata
+        metadata = self.registry.get_metadata(tool_name, to_version)
+        if not metadata or not hasattr(metadata, 'migrations'):
+            return None
+            
+        # Look for migration function
+        migration_key = f"{from_version}_to_{to_version}"
+        return metadata.migrations.get(migration_key)
