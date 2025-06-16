@@ -181,10 +181,10 @@ Tasks:
 - [x] Create resource allocation strategies
 - [x] Implement resource constraint handling
 - [x] Add adaptive resource management
-- [ ] Implement resource usage forecasting
-- [ ] **Add CloudWatch integration for metrics collection**
-- [ ] **Implement auto-scaling support for serverless resources**
-- [ ] **Add client-specific resource monitoring**
+- [x] Implement resource usage forecasting
+- [x] **Add CloudWatch integration for metrics collection**
+- [x] **Implement auto-scaling support for serverless resources**
+- [x] **Add client-specific resource monitoring**
 - [ ] **Create resource usage dashboards**
 
 ### Quality Controller (`src/workload_management/quality_controller.py`)
