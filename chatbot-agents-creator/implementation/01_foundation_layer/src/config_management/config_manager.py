@@ -117,18 +117,20 @@ class FileConfigSource(ConfigSource):
 
 
 class ParameterStoreConfigSource(ConfigSource):
-    """AWS Parameter Store configuration source"""
+    """AWS Parameter Store configuration source with secure parameter handling"""
     
-    def __init__(self, path_prefix: str, region: str = None):
+    def __init__(self, path_prefix: str, region: str = None, kms_key_id: str = None):
         """
         Initialize the Parameter Store configuration source
         
         Args:
             path_prefix: Path prefix for parameters
             region: AWS region
+            kms_key_id: KMS key ID for parameter encryption (optional)
         """
         self.path_prefix = path_prefix
         self.region = region
+        self.kms_key_id = kms_key_id
         self.ssm_client = None
         self.logger = logging.getLogger(__name__)
         
@@ -164,6 +166,8 @@ class ParameterStoreConfigSource(ConfigSource):
         for param in parameters:
             name = param['Name']
             value = param['Value']
+            param_type = param.get('Type', 'String')
+            version = param.get('Version', 1)
             
             # Remove prefix from parameter name
             if name.startswith(self.path_prefix):
@@ -176,17 +180,23 @@ class ParameterStoreConfigSource(ConfigSource):
             # Convert path to nested keys
             keys = name.split('/')
             
-            # Try to parse JSON value
-            try:
-                value = json.loads(value)
-            except json.JSONDecodeError:
-                pass
-                
-            # Build nested dictionary
+            # Try to parse JSON value for non-secure strings
+            if param_type != 'SecureString':
+                try:
+                    value = json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+                    
+            # Build nested dictionary with metadata
             current = result
             for i, key in enumerate(keys):
                 if i == len(keys) - 1:
-                    current[key] = value
+                    current[key] = {
+                        'value': value,
+                        'type': param_type,
+                        'version': version,
+                        'last_modified': param.get('LastModifiedDate', None)
+                    }
                 else:
                     if key not in current:
                         current[key] = {}
@@ -212,19 +222,55 @@ class ParameterStoreConfigSource(ConfigSource):
             param_path = f"{self.path_prefix}{prefix}/{key}"
             
             if isinstance(value, dict):
-                # Recursively process nested dictionaries
-                parameters.extend(self._dict_to_parameters(value, f"{prefix}/{key}"))
+                if 'value' in value:
+                    # Handle parameter with metadata
+                    param_value = value['value']
+                    param_type = value.get('type', 'String')
+                    
+                    # Convert value to string if needed
+                    if not isinstance(param_value, str):
+                        param_value = json.dumps(param_value)
+                        
+                    param = {
+                        'Name': param_path,
+                        'Value': param_value,
+                        'Type': param_type,
+                        'Overwrite': True
+                    }
+                    
+                    # Add KMS key for encryption if specified
+                    if param_type == 'SecureString' and self.kms_key_id:
+                        param['KeyId'] = self.kms_key_id
+                        
+                    # Add tags if present
+                    if 'tags' in value:
+                        param['Tags'] = [{'Key': k, 'Value': v} for k, v in value['tags'].items()]
+                        
+                    parameters.append(param)
+                else:
+                    # Recursively process nested dictionaries
+                    parameters.extend(self._dict_to_parameters(value, f"{prefix}/{key}"))
             else:
+                # Handle simple values
+                param_type = 'SecureString' if any(secret_word in key.lower() 
+                    for secret_word in ['secret', 'password', 'key', 'token', 'credential']) else 'String'
+                
                 # Convert value to string
                 if not isinstance(value, str):
                     value = json.dumps(value)
                     
-                parameters.append({
+                param = {
                     'Name': param_path,
                     'Value': value,
-                    'Type': 'SecureString' if 'secret' in key.lower() or 'password' in key.lower() or 'key' in key.lower() else 'String',
+                    'Type': param_type,
                     'Overwrite': True
-                })
+                }
+                
+                # Add KMS key for encryption if specified
+                if param_type == 'SecureString' and self.kms_key_id:
+                    param['KeyId'] = self.kms_key_id
+                    
+                parameters.append(param)
                 
         return parameters
         
@@ -252,22 +298,32 @@ class ParameterStoreConfigSource(ConfigSource):
                 kwargs = {
                     'Path': self.path_prefix,
                     'Recursive': True,
-                    'WithDecryption': True,
-                    'MaxResults': 10
+                    'WithDecryption': True  # Always decrypt secure strings
                 }
                 
                 if next_token:
                     kwargs['NextToken'] = next_token
                     
-                response = client.get_parameters_by_path(**kwargs)
-                parameters.extend(response.get('Parameters', []))
-                
-                next_token = response.get('NextToken')
-                if not next_token:
-                    break
+                try:
+                    response = client.get_parameters_by_path(**kwargs)
+                    parameters.extend(response.get('Parameters', []))
                     
+                    next_token = response.get('NextToken')
+                    if not next_token:
+                        break
+                except ClientError as e:
+                    error_code = e.response['Error']['Code']
+                    if error_code == 'AccessDeniedException':
+                        self.logger.error("Access denied to Parameter Store. Check IAM permissions.")
+                    elif error_code == 'ThrottlingException':
+                        self.logger.warning("AWS API throttling encountered. Some parameters may be missing.")
+                        break
+                    else:
+                        raise
+            
             return self._parameter_to_dict(parameters)
-        except ClientError as e:
+            
+        except Exception as e:
             self.logger.error(f"Error loading configuration from Parameter Store: {str(e)}")
             return {}
             
@@ -292,21 +348,95 @@ class ParameterStoreConfigSource(ConfigSource):
                 
             parameters = self._dict_to_parameters(config)
             
-            # Put parameters in batches of 10 (Parameter Store limit)
+            # Save parameters in batches of 10 (AWS limit)
             for i in range(0, len(parameters), 10):
-                batch = parameters[i:i+10]
-                for param in batch:
-                    client.put_parameter(
-                        Name=param['Name'],
-                        Value=param['Value'],
-                        Type=param['Type'],
-                        Overwrite=param['Overwrite']
-                    )
+                batch = parameters[i:i + 10]
+                
+                try:
+                    for param in batch:
+                        # Put parameter with error handling
+                        try:
+                            client.put_parameter(**param)
+                        except ClientError as e:
+                            error_code = e.response['Error']['Code']
+                            if error_code == 'AccessDeniedException':
+                                self.logger.error(f"Access denied when saving parameter {param['Name']}")
+                                return False
+                            elif error_code == 'ParameterAlreadyExists':
+                                # Parameter exists and Overwrite=False
+                                self.logger.warning(f"Parameter {param['Name']} already exists and cannot be overwritten")
+                            else:
+                                raise
+                                
+                except Exception as e:
+                    self.logger.error(f"Error saving parameters to Parameter Store: {str(e)}")
+                    return False
                     
             return True
-        except ClientError as e:
+            
+        except Exception as e:
             self.logger.error(f"Error saving configuration to Parameter Store: {str(e)}")
             return False
+            
+    def get_parameter_history(self, parameter_name: str) -> List[Dict[str, Any]]:
+        """
+        Get the history of a parameter
+        
+        Args:
+            parameter_name: Name of the parameter
+            
+        Returns:
+            List of parameter versions with metadata
+        """
+        if not AWS_AVAILABLE:
+            return []
+            
+        try:
+            client = self._get_client()
+            if client is None:
+                return []
+                
+            # Add prefix if not present
+            if not parameter_name.startswith(self.path_prefix):
+                parameter_name = f"{self.path_prefix}/{parameter_name}"
+                
+            response = client.get_parameter_history(
+                Name=parameter_name,
+                WithDecryption=True
+            )
+            
+            return [{
+                'version': param['Version'],
+                'value': param['Value'],
+                'type': param['Type'],
+                'last_modified': param['LastModifiedDate'],
+                'last_modified_user': param.get('LastModifiedUser', '')
+            } for param in response['Parameters']]
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'ParameterNotFound':
+                self.logger.warning(f"Parameter {parameter_name} not found")
+            else:
+                self.logger.error(f"Error getting parameter history: {str(e)}")
+            return []
+            
+    def get_parameter_by_version(self, parameter_name: str, version: int) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific version of a parameter
+        
+        Args:
+            parameter_name: Name of the parameter
+            version: Version number to retrieve
+            
+        Returns:
+            Parameter value and metadata, or None if not found
+        """
+        history = self.get_parameter_history(parameter_name)
+        for param in history:
+            if param['version'] == version:
+                return param
+        return None
 
 
 class ConfigManager:
