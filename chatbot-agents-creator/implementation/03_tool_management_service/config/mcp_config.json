@@ -1,0 +1,43 @@
+{
+    "security": {
+        "encryption_key_file": "keys/encryption.key",
+        "kms_key_id": "arn:aws:kms:us-west-2:123456789012:key/abcd1234-5678-90ab-cdef-1234567890ab",
+        "token_expiry": 3600,
+        "allowed_algorithms": ["RSASSA_PSS_SHA_256", "RSASSA_PSS_SHA_384", "RSASSA_PSS_SHA_512"],
+        "min_key_size": 2048,
+        "max_token_age": 86400
+    },
+    "audit": {
+        "audit_stream_name": "tool-management-audit-stream",
+        "cloudwatch_namespace": "ToolManagementService/Audit",
+        "retention_days": 90,
+        "log_level": "INFO",
+        "sensitive_fields": [
+            "password",
+            "api_key",
+            "secret",
+            "token"
+        ]
+    },
+    "access": {
+        "permissions_table": "tool-management-permissions",
+        "user_groups_table": "tool-management-user-groups",
+        "group_permissions_table": "tool-management-group-permissions",
+        "default_group": "user",
+        "admin_group": "admin",
+        "permission_separator": ":",
+        "cache_ttl": 300
+    },
+    "compliance": {
+        "enforce_encryption": true,
+        "require_audit_logging": true,
+        "enforce_access_control": true,
+        "allowed_regions": ["us-west-2", "us-east-1"],
+        "compliance_level": "high",
+        "data_classification": {
+            "sensitive": ["PII", "credentials", "secrets"],
+            "confidential": ["business_data", "internal_docs"],
+            "public": ["documentation", "examples"]
+        }
+    }
+} 
