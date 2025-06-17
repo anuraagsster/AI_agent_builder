@@ -7,7 +7,11 @@ from unittest.mock import MagicMock, patch
 import json
 import time
 from datetime import datetime
-from src.mcp_compliance import SecurityManager, AuditLogger, AccessController, MCPComplianceLayer
+
+from src.mcp_compliance.core import MCPComplianceLayer
+from src.mcp_compliance.security import SecurityManager
+from src.mcp_compliance.audit import AuditLogger
+from src.mcp_compliance.access import AccessController
 
 
 class TestSecurityManager(unittest.TestCase):
@@ -84,7 +88,8 @@ class TestAuditLogger(unittest.TestCase):
     def setUp(self):
         """Set up the audit logger for testing."""
         self.config = {
-            'audit_stream_name': 'test-stream'
+            'audit_stream_name': 'test-stream',
+            'cloudwatch_namespace': 'ToolManagementService/Audit'
         }
         self.audit = AuditLogger(self.config)
         
@@ -172,7 +177,8 @@ class TestMCPComplianceLayer(unittest.TestCase):
                 'token_expiry': 3600
             },
             'audit': {
-                'audit_stream_name': 'test-stream'
+                'audit_stream_name': 'test-stream',
+                'cloudwatch_namespace': 'ToolManagementService/Audit'
             },
             'access': {
                 'permissions_table': 'test-permissions',
@@ -182,9 +188,9 @@ class TestMCPComplianceLayer(unittest.TestCase):
         }
         self.compliance = MCPComplianceLayer(self.config)
         
-    @patch('src.mcp_compliance.SecurityManager')
-    @patch('src.mcp_compliance.AccessController')
-    @patch('src.mcp_compliance.AuditLogger')
+    @patch('src.mcp_compliance.security.SecurityManager')
+    @patch('src.mcp_compliance.access.AccessController')
+    @patch('src.mcp_compliance.audit.AuditLogger')
     def test_validate_request(self, mock_audit, mock_access, mock_security):
         """Test request validation."""
         # Mock security manager
@@ -225,7 +231,7 @@ class TestMCPComplianceLayer(unittest.TestCase):
         decrypted = self.compliance.decrypt_sensitive_data(encrypted)
         self.assertEqual(decrypted, data)
         
-    @patch('src.mcp_compliance.AuditLogger')
+    @patch('src.mcp_compliance.audit.AuditLogger')
     def test_log_security_event(self, mock_audit):
         """Test security event logging."""
         # Log event
